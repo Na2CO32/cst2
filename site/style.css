@@ -71,7 +71,9 @@ h1,h2,h3,p,figure{margin:0}
 :root[data-theme="dark"] .ic-moon{display:none}
 .login-area{display:flex;align-items:center;gap:8px}
 .user-info{font-size:13px;color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#g-signin{min-height:34px;display:flex;align-items:center}
+/* Google 按鈕的 iframe 是淺色文件；外層若是 dark，Chrome 會替 iframe 墊一塊白底。設成 light 讓 iframe 保持透明。 */
+#g-signin{min-height:34px;display:flex;align-items:center;color-scheme:light}
+#g-signin iframe{border-radius:8px}
 
 /* ---------- Layout ---------- */
 main:focus{outline:none}

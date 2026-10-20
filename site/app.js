@@ -532,9 +532,20 @@
     }
     if (!window.google || !google.accounts || !google.accounts.id) return setTimeout(initGoogleSignIn, 300);
     google.accounts.id.initialize({ client_id: CFG.GOOGLE_CLIENT_ID, callback: onCredential, auto_select: false });
-    google.accounts.id.renderButton($('g-signin'), {
+    gsiReady = true;
+    renderGoogleButton();
+  }
+
+  // Google 按鈕的主題與語言在繪製時就固定了，切換主題或語言後要重畫一次。
+  let gsiReady = false;
+  function renderGoogleButton() {
+    if (!gsiReady) return;
+    const holder = $('g-signin');
+    holder.textContent = '';
+    google.accounts.id.renderButton(holder, {
       theme: root.getAttribute('data-theme') === 'dark' ? 'filled_black' : 'outline',
-      size: 'medium', text: 'signin_with', locale: getLang() === 'zh' ? 'zh-TW' : 'en'
+      size: 'medium', shape: 'rectangular', text: 'signin', logo_alignment: 'left',
+      locale: getLang() === 'zh' ? 'zh-TW' : 'en'
     });
   }
 
@@ -928,6 +939,7 @@
     root.setAttribute('data-theme', next);
     storeSet('theme', next);
     heroRefresh();
+    renderGoogleButton();
   }
 
   function toggleLang() {
@@ -937,6 +949,7 @@
     storeSet('lang', next);
     const demoBtn = $('btn-demo-login');
     if (demoBtn) demoBtn.textContent = LOCAL ? t('local_login') : t('demo_login');
+    renderGoogleButton();
     renderAll();
     if (lbList.length && $('lightbox').style.display === 'flex') showLightbox();
   }
