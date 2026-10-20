@@ -51,9 +51,10 @@ h = hits(byExt('.gs'), /createHtmlOutput\s*\(|evaluate\s*\(/);
 check('後端沒有把使用者輸入送進 HtmlService（無伺服器端注入）', h.length === 0, h.join(', '));
 
 {
-  const allowed = ['doGet', 'doPost', 'setup', 'getPublicDataForPage'];
+  // loadTestData 一開始就呼叫 setup()，沿用它「只限擁有者在編輯器執行」的檢查。
+  const allowed = ['doGet', 'doPost', 'setup', 'loadTestData', 'getPublicDataForPage'];
   const exposed = byExt('.gs').flatMap(f => [...text(f).matchAll(/^function\s+([A-Za-z0-9_]+)\s*\(/gm)].map(m => m[1])).filter(n => !n.endsWith('_') && !allowed.includes(n));
-  check('後端只有 doGet / doPost / setup / getPublicDataForPage 能被瀏覽器直接呼叫（其餘函式名稱皆以 _ 結尾）', exposed.length === 0, exposed.join(', '));
+  check('後端只有 doGet / doPost / setup / loadTestData / getPublicDataForPage 能被瀏覽器直接呼叫（其餘函式名稱皆以 _ 結尾）', exposed.length === 0, exposed.join(', '));
 }
 
 {

@@ -505,6 +505,10 @@ shutil.copy(
     asd / 'appsscript.json'
 )
 
+# 虛構測試資料（選用，由 tools/gen_test_data.py 產生）。
+if (GS / 'TestData.gs').exists():
+    shutil.copy(GS / 'TestData.gs', asd / 'TestData.gs')
+
 written.append(('apps-script', asd))
 
 # clasp（Apps Script 命令列工具）設定，指向 dist/apps-script/。

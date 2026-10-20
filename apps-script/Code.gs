@@ -310,6 +310,54 @@ function importFromOldApi_() {
   return '已從舊後端匯入網站內容。\n';
 }
 
+// 載入虛構的測試資料（TestData.gs）：在 Apps Script 編輯器選擇 loadTestData 後按「執行」。
+// 先呼叫 setup() 確認是擁有者在編輯器中執行；只在網站內容還是空的時候寫入，不會覆寫既有資料。
+function loadTestData() {
+  setup();
+  if (typeof TEST_DATA_ === 'undefined') throw userError_('找不到 TestData.gs。');
+  const keys = ['team', 'home'].concat(Object.keys(COLLECTIONS_));
+  const hasContent = keys.some(function (k) {
+    const v = readDoc_(k, null);
+    return Array.isArray(v) ? v.length > 0 : !!(v && v.title && (v.title.zh || v.title.en));
+  });
+  if (hasContent) throw userError_('網站已有內容，為避免覆寫，不會載入測試資料。');
+
+  const failed = [];
+  function upload(base64, name) {
+    try {
+      return uploadImageToDrive_(base64, name);
+    } catch (e) {
+      failed.push(name + '：' + e.message);
+      return '';
+    }
+  }
+
+  return withLock_(function () {
+    const d = TEST_DATA_;
+    writeDoc_('team', { title: d.team.title, description: d.team.description, imageUrl: upload(d.team.image, 'test-team') });
+    writeDoc_('home', d.home);
+    Object.keys(COLLECTIONS_).forEach(function (name) {
+      const spec = COLLECTIONS_[name];
+      const list = [];
+      (d[name] || []).forEach(function (item, i) {
+        const out = { id: Utilities.getUuid() };
+        Object.keys(spec.fields).forEach(function (f) { out[f] = cleanField_(item[f], spec.fields[f]); });
+        if (spec.image) {
+          out[spec.image] = item.image ? upload(item.image, 'test-' + name + '-' + (i + 1)) : '';
+          if (spec.imageRequired && !out[spec.image]) return;
+        }
+        list.push(out);
+      });
+      writeDoc_(name, list);
+    });
+    clearPublicCache_();
+    audit_('loadTestData', failed.length ? failed.length + ' 張圖片上傳失敗' : '');
+    const message = '已載入測試資料。' + (failed.length ? '\n以下圖片上傳失敗：\n' + failed.join('\n') : '');
+    Logger.log(message);
+    return message;
+  });
+}
+
 // 供「由 Apps Script 直接提供的網頁」讀取公開資料（唯讀，不含任何管理員資訊）。
 function getPublicDataForPage() {
   return getPublicData_();
